@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Resizer - Frontend</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            margin-bottom: 16px;
+            color: #34495e;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 8px;
+        }
+
+        .upload-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        input[type="file"],
+        input[type="text"] {
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        input[type="file"]:focus,
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #229954;
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .status {
+            padding: 12px;
+            border-radius: 4px;
+            margin: 12px 0;
+            font-weight: 500;
+            display: none;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .bucket-list,
+        .object-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 8px;
+            background: #f8f9fa;
+        }
+
+        .tree-view {
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 13px;
+        }
+
+        .tree-item {
+            display: flex;
+            align-items: center;
+            padding: 4px 8px;
+            margin: 1px 0;
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.2s;
+        }
+
+        .tree-item:hover {
+            background: #e3f2fd;
+            border-radius: 4px;
+        }
+
+        .tree-item.folder {
+            font-weight: 600;
+            color: #1976d2;
+        }
+
+        .tree-item.file {
+            color: #424242;
+        }
+
+        .tree-item.image {
+            color: #d32f2f;
+        }
+
+        .tree-indent {
+            display: inline-block;
+            width: 20px;
+        }
+
+        .tree-icon {
+            display: inline-block;
+            width: 20px;
+            text-align: center;
+            margin-right: 6px;
+            font-size: 16px;
+        }
+
+        .tree-chevron {
+            display: inline-block;
+            width: 16px;
+            text-align: center;
+            margin-right: 4px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .tree-chevron.expanded {
+            transform: rotate(90deg);
+        }
+
+        .tree-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tree-size {
+            font-size: 11px;
+            color: #666;
+            margin-left: auto;
+        }
+
+        .tree-date {
+            font-size: 11px;
+            color: #999;
+        }
+
+        .bucket-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            margin: 4px 0;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .bucket-item:hover {
+            border-color: #3498db;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .bucket-icon {
+            font-size: 24px;
+            margin-right: 12px;
+        }
+
+        .bucket-info {
+            flex: 1;
+        }
+
+        .bucket-name {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 4px;
+        }
+
+        .bucket-meta {
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .preview-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            animation: fadeIn 0.3s;
+        }
+
+        .preview-content {
+            position: relative;
+            margin: 50px auto;
+            padding: 20px;
+            max-width: 90%;
+            max-height: 90%;
+            text-align: center;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 80vh;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .close-preview {
+            position: absolute;
+            top: 10px;
+            right: 25px;
+            color: white;
+            font-size: 35px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 1001;
+        }
+
+        .close-preview:hover {
+            color: #ccc;
+        }
+
+        .preview-info {
+            color: white;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .resize-options {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .resize-btn {
+            padding: 8px 16px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .resize-btn:hover {
+            background: #2980b9;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .resize-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            align-items: end;
+        }
+
+        .resize-form input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🖼️ Image Resizer</h1>
+            <p>Upload, redimensione e gerencie suas imagens</p>
+        </div>
+
+        <div class="card">
+            <h2>🔧 Setup Inicial</h2>
+            <div class="actions">
+                <button class="btn btn-success" onclick="setupBucket()">Criar Bucket</button>
+                <button class="btn btn-danger" onclick="deleteBucket()">Deletar Bucket</button>
+                <button class="btn btn-secondary" onclick="checkHealth()">Health Check</button>
+            </div>
+            <div id="setup-status" class="status"></div>
+        </div>
+
+        <div class="card">
+            <h2>📤 Upload de Imagem</h2>
+            <form id="upload-form" class="upload-form">
+                <div class="form-group">
+                    <label for="image-file">Selecionar Imagem:</label>
+                    <input type="file" id="image-file" accept="image/*" required>
+                </div>
+                <div class="form-group">
+                    <label for="image-name">Nome Customizado (opcional):</label>
+                    <input type="text" id="image-name" placeholder="Ex: minha-imagem.jpg">
+                </div>
+                <button type="submit" class="btn btn-primary">Upload Imagem</button>
+            </form>
+            <div id="upload-status" class="status"></div>
+            <div id="upload-loading" class="loading">
+                <div class="spinner"></div>
+                Fazendo upload...
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🗂️ Buckets</h2>
+            <div class="actions">
+                <button class="btn btn-secondary" onclick="listBuckets()">Listar Buckets</button>
+            </div>
+            <div id="bucket-loading" class="loading">
+                <div class="spinner"></div>
+                Carregando buckets...
+            </div>
+            <div id="bucket-list" class="bucket-list" style="display:none;"></div>
+        </div>
+
+        <div class="card">
+            <h2>📋 Objetos no Bucket</h2>
+            <div class="actions">
+                <button class="btn btn-secondary" onclick="listObjects()">Listar Objetos</button>
+            </div>
+            <div id="object-loading" class="loading">
+                <div class="spinner"></div>
+                Carregando objetos...
+            </div>
+            <div id="object-list" class="object-list" style="display:none;"></div>
+        </div>
+
+        <div class="card">
+            <h2>🖼️ Testar Redimensionamento</h2>
+            <div class="resize-form">
+                <input type="text" id="test-image" placeholder="Nome da imagem (ex: test.jpg)">
+                <input type="number" id="test-width" placeholder="Largura">
+                <input type="number" id="test-height" placeholder="Altura">
+                <button class="btn btn-primary" onclick="testResize()">Testar</button>
+            </div>
+            <div id="resize-status" class="status"></div>
+        </div>
+    </div>
+
+    <div id="preview-modal" class="preview-modal">
+        <span class="close-preview" onclick="closePreview()">&times;</span>
+        <div class="preview-content">
+            <img id="preview-image" class="preview-image" src="" alt="Preview">
+            <div id="preview-info" class="preview-info"></div>
+            <div class="resize-options">
+                <button class="resize-btn" onclick="previewResize(150)">150px</button>
+                <button class="resize-btn" onclick="previewResize(300)">300px</button>
+                <button class="resize-btn" onclick="previewResize(500)">500px</button>
+                <button class="resize-btn" onclick="previewResize(800)">800px</button>
+                <button class="resize-btn" onclick="previewOriginal()">Original</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000';
+
+        function showStatus(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `status ${type}`;
+            element.style.display = 'block';
+            setTimeout(() => {
+                element.style.display = 'none';
+            }, 5000);
+        }
+
+        function showLoading(elementId, show = true) {
+            document.getElementById(elementId).style.display = show ? 'block' : 'none';
+        }
+
+        async function setupBucket() {
+            try {
+                showStatus('setup-status', 'Criando bucket...', 'info');
+                const response = await fetch(`${API_BASE}/setup`, { method: 'POST' });
+                const data = await response.json();
+
+                if (data.success) {
+                    showStatus('setup-status', data.message, 'success');
+                } else {
+                    showStatus('setup-status', data.error || 'Erro no setup', 'error');
+                }
+            } catch (error) {
+                showStatus('setup-status', `Erro: ${error.message}`, 'error');
+            }
+        }
+
+        async function deleteBucket() {
+            if (!confirm('⚠️ ATENÇÃO: Isso irá deletar o bucket test-bucket e TODOS os arquivos dentro dele. Esta ação é irreversível.\n\nDeseja continuar?')) {
+                return;
+            }
+
+            try {
+                showStatus('setup-status', 'Deletando bucket e todos os objetos...', 'info');
+                const response = await fetch(`${API_BASE}/bucket/test-bucket`, { method: 'DELETE' });
+                const data = await response.json();
+
+                if (data.success) {
+                    showStatus('setup-status',
+                        `✅ ${data.message} (${data.objectsDeleted} objetos deletados)`,
+                        'success'
+                    );
+                } else {
+                    showStatus('setup-status', data.error || 'Erro ao deletar bucket', 'error');
+                }
+            } catch (error) {
+                showStatus('setup-status', `Erro: ${error.message}`, 'error');
+            }
+        }
+
+        async function checkHealth() {
+            try {
+                showStatus('setup-status', 'Verificando saúde do servidor...', 'info');
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+
+                if (data.status === 'OK') {
+                    showStatus('setup-status', `Servidor OK - ${data.timestamp}`, 'success');
+                } else {
+                    showStatus('setup-status', 'Servidor com problemas', 'error');
+                }
+            } catch (error) {
+                showStatus('setup-status', `Erro: ${error.message}`, 'error');
+            }
+        }
+
+        document.getElementById('upload-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const fileInput = document.getElementById('image-file');
+            const nameInput = document.getElementById('image-name');
+
+            if (!fileInput.files[0]) {
+                showStatus('upload-status', 'Selecione uma imagem', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('image', fileInput.files[0]);
+            if (nameInput.value.trim()) {
+                formData.append('name', nameInput.value.trim());
+            }
+
+            try {
+                showLoading('upload-loading', true);
+                showStatus('upload-status', 'Fazendo upload...', 'info');
+
+                const response = await fetch(`${API_BASE}/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showStatus('upload-status',
+                        `Upload concluído! Arquivo: ${data.fileName}. Teste: ${data.testUrl}`,
+                        'success'
+                    );
+                    fileInput.value = '';
+                    nameInput.value = '';
+                } else {
+                    showStatus('upload-status', data.error || 'Erro no upload', 'error');
+                }
+            } catch (error) {
+                showStatus('upload-status', `Erro: ${error.message}`, 'error');
+            } finally {
+                showLoading('upload-loading', false);
+            }
+        });
+
+        async function listBuckets() {
+            try {
+                showLoading('bucket-loading', true);
+                const response = await fetch(`${API_BASE}/debug/buckets`);
+                const data = await response.json();
+
+                const listElement = document.getElementById('bucket-list');
+
+                if (data.buckets && data.buckets.length > 0) {
+                    listElement.innerHTML = data.buckets.map(bucket => {
+                        const createdDate = new Date(bucket.CreationDate);
+                        return `
+                            <div class="bucket-item" onclick="listObjects('${bucket.Name}')">
+                                <span class="bucket-icon">🗂️</span>
+                                <div class="bucket-info">
+                                    <div class="bucket-name">${bucket.Name}</div>
+                                    <div class="bucket-meta">
+                                        Criado em ${createdDate.toLocaleDateString()} às ${createdDate.toLocaleTimeString()}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                    listElement.style.display = 'block';
+                } else {
+                    listElement.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📦</div>
+                            <div>Nenhum bucket encontrado</div>
+                            <div style="font-size: 12px; margin-top: 8px;">Clique em "Criar Bucket" para começar</div>
+                        </div>
+                    `;
+                    listElement.style.display = 'block';
+                }
+            } catch (error) {
+                document.getElementById('bucket-list').innerHTML =
+                    `<div class="bucket-item">❌ Erro: ${error.message}</div>`;
+                document.getElementById('bucket-list').style.display = 'block';
+            } finally {
+                showLoading('bucket-loading', false);
+            }
+        }
+
+        const expandedFolders = new Set();
+
+        function buildFileTree(objects) {
+            const tree = {};
+
+            objects.forEach(obj => {
+                const parts = obj.Key.split('/');
+                let current = tree;
+
+                parts.forEach((part, index) => {
+                    if (index === parts.length - 1) {
+                        // É um arquivo
+                        if (!current._files) current._files = [];
+                        current._files.push({
+                            name: part,
+                            fullPath: obj.Key,
+                            size: obj.Size,
+                            lastModified: obj.LastModified
+                        });
+                    } else {
+                        // É uma pasta
+                        if (!current[part]) {
+                            current[part] = {};
+                        }
+                        current = current[part];
+                    }
+                });
+            });
+
+            return tree;
+        }
+
+        function renderFileTree(tree, prefix = '', level = 0) {
+            let html = '';
+
+            const folders = Object.keys(tree).filter(key => key !== '_files').sort();
+            folders.forEach(folderName => {
+                const folderPath = prefix ? `${prefix}/${folderName}` : folderName;
+                const isExpanded = expandedFolders.has(folderPath);
+
+                html += `
+                    <div class="tree-item folder" data-path="${folderPath}">
+                        ${level > 0 ? `<span class="tree-indent" style="width: ${level * 20}px"></span>` : ''}
+                        <span class="tree-chevron ${isExpanded ? 'expanded' : ''}" onclick="toggleFolder('${folderPath}', event)">▶</span>
+                        <span class="tree-icon">📁</span>
+                        <span class="tree-content">${folderName}</span>
+                    </div>
+                `;
+
+                if (isExpanded) {
+                    html += renderFileTree(tree[folderName], folderPath, level + 1);
+                }
+            });
+
+            if (tree._files) {
+                tree._files.sort((a, b) => a.name.localeCompare(b.name)).forEach(file => {
+                    const isImage = file.name.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i);
+                    const icon = isImage ? '🖼️' : '📄';
+                    const className = isImage ? 'tree-item file image' : 'tree-item file';
+                    const onClick = isImage ? `onclick="previewImage('${file.fullPath}')"` : '';
+
+                    html += `
+                        <div class="${className}" ${onClick} title="${isImage ? 'Clique para visualizar' : file.fullPath}">
+                            ${level > 0 ? `<span class="tree-indent" style="width: ${(level + 1) * 20}px"></span>` : '<span class="tree-indent"></span>'}
+                            <span class="tree-icon">${icon}</span>
+                            <span class="tree-content">
+                                ${file.name}
+                                <span class="tree-size">${formatFileSize(file.size)}</span>
+                                <span class="tree-date">${formatDate(file.lastModified)}</span>
+                            </span>
+                        </div>
+                    `;
+                });
+            }
+
+            return html;
+        }
+
+        function toggleFolder(path, event) {
+            event.stopPropagation();
+            if (expandedFolders.has(path)) {
+                expandedFolders.delete(path);
+            } else {
+                expandedFolders.add(path);
+            }
+            listObjects(); // Re-renderizar
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        async function listObjects(bucketName = 'test-bucket') {
+            try {
+                showLoading('object-loading', true);
+                const response = await fetch(`${API_BASE}/debug/bucket/${bucketName}`);
+                const data = await response.json();
+
+                const listElement = document.getElementById('object-list');
+                listElement.classList.add('tree-view');
+
+                if (data.objects && data.objects.length > 0) {
+                    const tree = buildFileTree(data.objects);
+                    listElement.innerHTML = renderFileTree(tree);
+                    listElement.style.display = 'block';
+                } else {
+                    listElement.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📁</div>
+                            <div>Nenhum objeto encontrado no bucket</div>
+                            <div style="font-size: 12px; margin-top: 8px;">Faça upload de arquivos para começar</div>
+                        </div>
+                    `;
+                    listElement.style.display = 'block';
+                }
+            } catch (error) {
+                document.getElementById('object-list').innerHTML =
+                    `<div class="tree-item">❌ Erro: ${error.message}</div>`;
+                document.getElementById('object-list').style.display = 'block';
+            } finally {
+                showLoading('object-loading', false);
+            }
+        }
+
+        async function testResize() {
+            const imageName = document.getElementById('test-image').value.trim();
+            const width = document.getElementById('test-width').value;
+            const height = document.getElementById('test-height').value;
+
+            if (!imageName) {
+                showStatus('resize-status', 'Digite o nome da imagem', 'error');
+                return;
+            }
+
+            if (!width && !height) {
+                showStatus('resize-status', 'Digite pelo menos largura ou altura', 'error');
+                return;
+            }
+
+            try {
+                const params = new URLSearchParams();
+                if (width) params.append('width', width);
+                if (height) params.append('height', height);
+
+                const url = `${API_BASE}/images/${imageName}?${params.toString()}`;
+                showStatus('resize-status', 'Testando redimensionamento...', 'info');
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (response.ok) {
+                    showStatus('resize-status',
+                        `✅ Sucesso! Location: ${data.location}`,
+                        'success'
+                    );
+                } else {
+                    showStatus('resize-status',
+                        `❌ Erro ${response.status}: ${data.message || data.error}`,
+                        'error'
+                    );
+                }
+            } catch (error) {
+                showStatus('resize-status', `Erro: ${error.message}`, 'error');
+            }
+        }
+
+        let currentImageKey = '';
+
+        async function previewImage(imageKey) {
+            currentImageKey = imageKey;
+            const modal = document.getElementById('preview-modal');
+            const img = document.getElementById('preview-image');
+            const info = document.getElementById('preview-info');
+
+            modal.style.display = 'block';
+
+            info.innerHTML = `<strong>${imageKey}</strong><br>Clique nos botões abaixo para ver diferentes tamanhos`;
+
+            previewOriginal();
+        }
+
+        async function previewResize(width) {
+            if (!currentImageKey) return;
+
+            const img = document.getElementById('preview-image');
+            const info = document.getElementById('preview-info');
+
+            try {
+                const response = await fetch(`${API_BASE}/images/${currentImageKey}?width=${width}`);
+                const data = await response.json();
+
+                if (response.ok && data.location) {
+                    img.src = data.location;
+                    info.innerHTML = `<strong>${currentImageKey}</strong><br>Redimensionada para ${width}px de largura`;
+                } else {
+                    info.innerHTML = `<strong>${currentImageKey}</strong><br>❌ Erro ao redimensionar: ${data.message || data.error}`;
+                }
+            } catch (error) {
+                info.innerHTML = `<strong>${currentImageKey}</strong><br>❌ Erro: ${error.message}`;
+            }
+        }
+
+        // função para mostrar imagem original
+        async function previewOriginal() {
+            if (!currentImageKey) return;
+
+            const img = document.getElementById('preview-image');
+            const info = document.getElementById('preview-info');
+
+            // URL direta para a imagem original no LocalStack
+            const originalUrl = `http://localhost:4566/test-bucket/${currentImageKey}`;
+            img.src = originalUrl;
+            info.innerHTML = `<strong>${currentImageKey}</strong><br>Imagem original`;
+        }
+
+        function closePreview() {
+            document.getElementById('preview-modal').style.display = 'none';
+            currentImageKey = '';
+        }
+
+        window.onclick = function (event) {
+            const modal = document.getElementById('preview-modal');
+            if (event.target == modal) {
+                closePreview();
+            }
+        }
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                closePreview();
+            }
+        });
+
+        window.addEventListener('load', () => {
+            checkHealth();
+        });
+    </script>
+</body>
+
+</html>
